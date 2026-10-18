@@ -66,6 +66,7 @@ main{padding:16px 16px 60px}
 .meta h3{font-family:var(--serif);font-weight:600;font-size:.92rem;line-height:1.25;margin:8px 0 2px;
          display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
 .meta p{margin:0;color:var(--muted);font-size:.83rem;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.meta p.num{color:var(--accent);font-weight:600;font-size:.9rem}
 
 /* Lector */
 #reader{position:fixed;inset:0;z-index:50;display:flex;flex-direction:column;background:#2b2f36;color:#fff}
@@ -357,7 +358,7 @@ function renderMore(){
   for(let i=shown;i<end;i++){
     const it=filtered[i],el=document.createElement('article');
     el.className='card';el.tabIndex=0;
-    el.innerHTML=`<div class="cover${dlIndex[it.id]?' dl':''}">${coverHtml(it)}</div><div class="meta"><h3>${esc(it.mag)}</h3><p>${esc(subtitle(it))}</p></div>`;
+    el.innerHTML=`<div class="cover${dlIndex[it.id]?' dl':''}">${coverHtml(it)}</div><div class="meta"><h3>${esc(it.mag)}</h3>${it.num?`<p class="num">Nº ${it.num}</p>`:''}<p>${esc([it.month?cap(MESES[it.month-1]):'',it.year||''].filter(Boolean).join(' '))}</p></div>`;
     const cv=el.querySelector('.cover');cv._issue=it;coverObserver.observe(cv);
     el.addEventListener('click',()=>openIssue(it));
     el.addEventListener('keydown',e=>{if(e.key==='Enter')openIssue(it);});
