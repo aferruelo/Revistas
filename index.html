@@ -261,17 +261,26 @@ let issues=[],dlIndex={},offlineMode=false;
 
 // Nombres tipo «03-16-Historia National geographic-Nº147.pdf» (mes, año de 2 cifras, revista, número)
 const NAME_RE=/^(\d{1,2})-(\d{2}|\d{4})-(.*?)-?\s*N[º°o.]?\s*(\d+)\.pdf$/i;
+function monthFromName(s){const i=MESES.indexOf(norm(s));return i>=0?i+1:null;}
 function toIssue(f,path){
   const mag=path[0]||'Sin carpeta de revista';
-  const yearFolder=((path[1]||'').match(/\b(19|20)\d{2}\b/)||[])[0];
-  let year=yearFolder?+yearFolder:null,month=null,num=null;
-  const m=f.name.match(NAME_RE);
-  if(m){
+  const yf=path[1]||'';
+  const yearFolder=(yf.match(/\b(19|20)\d{2}\b/)||[])[0];
+  const range=yf.match(/\((\d+)\s*[-–]\s*(\d+)\)/);   // «2015 (133-144)» → números 133 a 144
+  let year=yearFolder?+yearFolder:null,month=null,num=null,m;
+  if((m=f.name.match(/(\d{4})-(\d{1,2})\s*-\s*N(\d+)\.pdf$/i))){   // Historia National Geographic - 2018-09 - N177.pdf
+    year=+m[1];month=+m[2];num=+m[3];
+  }else if((m=f.name.match(NAME_RE))){                              // 03-16-Historia National geographic-Nº147.pdf
     const mo=+m[1];month=mo>=1&&mo<=12?mo:null;
-    const y=m[2].length===2?2000+ +m[2]:+m[2];year=y;num=+m[4];
+    year=m[2].length===2?2000+ +m[2]:+m[2];num=+m[4];
+  }else if((m=f.name.match(/(\d{1,4})\s*[-–]\s*([^\d.]+?)\s+(\d{4})\.pdf$/i))&&monthFromName(m[2])){
+    num=+m[1];month=monthFromName(m[2]);year=+m[3];          // Historia National Geographic 177 - Septiembre 2018.pdf
+  }else if((m=f.name.match(/(\d{4})\s+(\d{1,2})\.pdf$/i))){
+    year=+m[1];month=+m[2];                                   // Historia National Geographic 2015 05.pdf
   }else{
     const n=f.name.match(/N[º°o.]?\s*(\d+)/i);if(n)num=+n[1];
   }
+  if(num===null&&range&&month)num=+range[1]+month-1;          // sin número en el nombre: se calcula desde la carpeta
   return {id:f.id,name:f.name,size:+f.size||0,thumb:f.thumbnailLink||'',mag,year,month,num,mod:Date.parse(f.modifiedTime)||0};
 }
 async function walk(id,path,depth,out){
