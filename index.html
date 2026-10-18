@@ -513,6 +513,26 @@ $('#rWrap').addEventListener('click',e=>{
   if(x<r.width*0.3)goPage(pageNo-1);
   else if(x>r.width*0.7)goPage(pageNo+1);
 });
+/* Deslizar el dedo a izquierda/derecha para pasar página */
+(()=>{
+  const w=$('#rWrap');let sx=0,sy=0,st=0,on=false;
+  w.addEventListener('touchstart',e=>{
+    if(e.touches.length!==1){on=false;return;}
+    sx=e.touches[0].clientX;sy=e.touches[0].clientY;st=Date.now();on=true;
+  },{passive:true});
+  w.addEventListener('touchmove',e=>{
+    if(on&&e.touches.length!==1)on=false;
+  },{passive:true});
+  w.addEventListener('touchcancel',()=>{on=false;},{passive:true});
+  w.addEventListener('touchend',e=>{
+    if(!on)return;on=false;
+    if(Date.now()-st>800)return;
+    const t=e.changedTouches[0],dx=t.clientX-sx,dy=t.clientY-sy;
+    if(Math.abs(dx)>60&&Math.abs(dx)>Math.abs(dy)*1.5){
+      if(dx<0)goPage(pageNo+1);else goPage(pageNo-1);
+    }
+  },{passive:true});
+})();
 function keyNav(e){
   if($('#reader').hidden)return;
   if(e.key==='ArrowRight'||e.key==='PageDown')goPage(pageNo+1);
