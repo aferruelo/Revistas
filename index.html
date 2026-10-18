@@ -1,0 +1,527 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#2b6a5c">
+<title>Revistas</title>
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" href="icon-192.png">
+<link rel="apple-touch-icon" href="icon-192.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Literata:opsz,wght@7..72,400;7..72,600&family=Public+Sans:wght@400;500;600&display=swap" rel="stylesheet" crossorigin="anonymous">
+<style>
+:root{
+  --bg:#eceff1; --surface:#ffffff; --ink:#162033; --muted:#5d6a7c; --line:#d5dce3;
+  --accent:#2b6a5c; --accent-ink:#ffffff; --chip:#e1e8ec;
+  --serif:"Literata",Georgia,"Times New Roman",serif;
+  --sans:"Public Sans",system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;
+}
+@media (prefers-color-scheme:dark){
+  :root:not([data-theme="light"]){--bg:#11161d; --surface:#18202a; --ink:#e6ebf1; --muted:#93a0b2; --line:#2a3441; --accent:#5fb3a0; --accent-ink:#0d1a17; --chip:#243040;}
+}
+:root[data-theme="dark"]{--bg:#11161d; --surface:#18202a; --ink:#e6ebf1; --muted:#93a0b2; --line:#2a3441; --accent:#5fb3a0; --accent-ink:#0d1a17; --chip:#243040;}
+*{box-sizing:border-box}
+[hidden]{display:none!important}
+html,body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--sans);font-size:15px;line-height:1.45}
+button,input,select{font:inherit;color:inherit}
+button{cursor:pointer}
+:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+
+.screen{max-width:600px;margin:8vh auto 0;padding:0 24px}
+.screen h1{font-family:var(--serif);font-weight:600;font-size:1.9rem;line-height:1.15;margin:0 0 12px}
+.screen p{color:var(--muted);margin:0 0 18px;max-width:60ch}
+.screen label{display:block;font-weight:600;margin:0 0 6px}
+.btn{background:var(--accent);color:var(--accent-ink);border:0;border-radius:8px;padding:10px 18px;font-weight:600}
+.btn.ghost{background:transparent;color:var(--ink);border:1px solid var(--line)}
+.btn.small{padding:7px 12px;font-size:.9rem}
+.field{width:100%;padding:10px 12px;border:1px solid var(--line);border-radius:8px;background:var(--surface);margin-bottom:16px}
+#status.error{color:#b3261e}
+@media (prefers-color-scheme:dark){#status.error{color:#f2b8b5}}
+.row{display:flex;gap:10px;flex-wrap:wrap}
+
+.bar{position:sticky;top:0;z-index:5;background:var(--surface);border-bottom:1px solid var(--line);
+     display:flex;align-items:center;gap:10px;padding:10px 16px;padding-top:max(10px,env(safe-area-inset-top));flex-wrap:wrap}
+.bar h1{font-family:var(--serif);font-size:1.1rem;font-weight:600;margin:0;margin-right:auto}
+.bar input[type=search]{flex:1 1 200px;max-width:360px;padding:8px 12px;border:1px solid var(--line);border-radius:8px;background:var(--bg)}
+.bar select{padding:8px;border:1px solid var(--line);border-radius:8px;background:var(--bg);max-width:200px}
+.toggle.on{background:var(--accent);color:var(--accent-ink);border-color:var(--accent)}
+
+main{padding:16px 16px 60px}
+#summary{color:var(--muted);margin-bottom:10px}
+#active{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px}
+.chip{background:var(--chip);border:0;border-radius:999px;padding:5px 12px;font-size:.9rem}
+.banner{background:var(--chip);border-radius:10px;padding:10px 14px;margin-bottom:14px;display:flex;gap:12px;align-items:center;justify-content:space-between;flex-wrap:wrap}
+
+#grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(140px,1fr));gap:20px 14px}
+.card{cursor:pointer;min-width:0}
+.cover{position:relative;aspect-ratio:2/3;border-radius:4px;overflow:hidden;background:var(--chip);box-shadow:0 1px 2px rgba(0,0,0,.25)}
+.cover img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;opacity:0;transition:opacity .2s}
+.cover img.ok{opacity:1}
+.cover.dl::after{content:"✓";position:absolute;right:6px;bottom:6px;width:22px;height:22px;border-radius:50%;
+  background:var(--accent);color:var(--accent-ink);font-size:.8rem;font-weight:700;display:flex;align-items:center;justify-content:center}
+.ph{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;padding:12px;text-align:center;
+    font-family:var(--serif);font-size:.9rem;color:#fff}
+.meta h3{font-family:var(--serif);font-weight:600;font-size:.92rem;line-height:1.25;margin:8px 0 2px;
+         display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+.meta p{margin:0;color:var(--muted);font-size:.83rem;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+
+/* Lector */
+#reader{position:fixed;inset:0;z-index:50;display:flex;flex-direction:column;background:#2b2f36;color:#fff}
+.rtop{display:flex;align-items:center;gap:8px;padding:8px 10px;padding-top:max(8px,env(safe-area-inset-top));background:#1d2025}
+.rtop button,.rbot button{background:none;border:0;color:inherit;padding:10px 12px;border-radius:8px;min-height:44px;font-weight:500}
+.rtitle{flex:1;min-width:0;font-family:var(--serif);font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+#rWrap{flex:1;min-height:0;overflow:auto;display:flex;justify-content:center;align-items:flex-start;padding:10px 12px;position:relative}
+#rCanvas{background:#fff;box-shadow:0 2px 10px rgba(0,0,0,.4);display:block}
+#rLoad{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;text-align:center;padding:24px;font-family:var(--serif);font-size:1.1rem}
+.rbot{display:flex;flex-direction:column;gap:2px;padding:6px 10px;padding-bottom:max(6px,env(safe-area-inset-bottom));background:#1d2025}
+.rbot .srow{display:flex;align-items:center;gap:6px}
+#rSlider{flex:1;accent-color:#5fb3a0}
+.rfoot{text-align:center;font-size:.85rem;opacity:.85;font-variant-numeric:tabular-nums}
+
+@media (max-width:800px){
+  #grid{grid-template-columns:repeat(auto-fill,minmax(110px,1fr))}
+}
+@media (prefers-reduced-motion:reduce){.cover img{transition:none}}
+</style>
+</head>
+<body>
+
+<!-- Configuración -->
+<section id="welcome" class="screen" hidden>
+  <h1>Tus revistas, desde cualquier dispositivo</h1>
+  <p>Lee la carpeta de revistas en Google Drive. La clave de API se guarda en este navegador; si ya la pusiste en la biblioteca, aparece sola.</p>
+  <label for="keyInput">Clave de API de Google</label>
+  <input class="field" id="keyInput" placeholder="AIza…" autocomplete="off" spellcheck="false">
+  <label for="folderInput">Enlace de la carpeta de revistas</label>
+  <input class="field" id="folderInput" placeholder="https://drive.google.com/drive/folders/…" autocomplete="off" spellcheck="false">
+  <div class="row">
+    <button class="btn" id="saveSetup">Guardar y abrir</button>
+    <button class="btn ghost" id="cancelSetup" hidden>Cancelar</button>
+  </div>
+  <p id="status" role="status" style="margin-top:16px"></p>
+</section>
+
+<section id="loading" class="screen" hidden>
+  <h1>Abriendo las revistas…</h1>
+  <p id="loadMsg" role="status"></p>
+</section>
+
+<div id="app" hidden>
+  <header class="bar">
+    <h1>Revistas</h1>
+    <input type="search" id="q" placeholder="Buscar por revista, número, año o mes" aria-label="Buscar">
+    <select id="mag" aria-label="Revista"></select>
+    <select id="yr" aria-label="Año"></select>
+    <select id="sort" aria-label="Ordenar">
+      <option value="date">Fecha</option>
+      <option value="num">Número</option>
+    </select>
+    <button class="btn ghost small" id="dirBtn" title="Invertir el orden"></button>
+    <button class="btn ghost small toggle" id="dlOnly">Solo descargadas</button>
+    <button class="btn ghost small" id="reload">Actualizar</button>
+    <button class="btn ghost small" id="change">Ajustes</button>
+  </header>
+  <main>
+    <div class="banner" id="banner" hidden>
+      <span>Sin conexión. Solo puedes leer las revistas descargadas.</span>
+    </div>
+    <div id="summary"></div>
+    <div id="active"></div>
+    <div id="grid"></div>
+    <div id="sentinel" style="height:1px"></div>
+  </main>
+</div>
+
+<!-- Lector -->
+<div id="reader" hidden>
+  <div class="rtop">
+    <button id="rBack" aria-label="Volver">‹ Volver</button>
+    <div class="rtitle" id="rTitle"></div>
+    <button id="rDl">Guardar</button>
+  </div>
+  <div id="rWrap">
+    <canvas id="rCanvas"></canvas>
+    <div id="rLoad" hidden></div>
+  </div>
+  <div class="rbot">
+    <div class="srow">
+      <button id="rPrev" aria-label="Página anterior">‹</button>
+      <input type="range" id="rSlider" min="1" max="1" value="1" disabled aria-label="Página">
+      <button id="rNext" aria-label="Página siguiente">›</button>
+    </div>
+    <div class="rfoot" id="rFoot"></div>
+  </div>
+</div>
+
+<script>
+/* ================= Configuración ================= */
+const PDFJS='https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/';
+const DRIVE='https://www.googleapis.com/drive/v3/';
+const DEFAULT_ROOT='1yauXrwL2R1F0kebCayo1mWLBwQAV_DgE';
+const MESES=['enero','febrero','marzo','abril','mayo','junio','julio','agosto','septiembre','octubre','noviembre','diciembre'];
+const PAGE=120;
+
+const $=s=>document.querySelector(s);
+const ls=localStorage;
+const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const norm=s=>String(s||'').normalize('NFD').replace(/[̀-ͯ]/g,'').toLowerCase();
+const nfc=s=>String(s).normalize('NFC');
+const sleep=ms=>new Promise(r=>setTimeout(r,ms));
+const mb=n=>(n/1048576).toFixed(1)+' MB';
+const cap=s=>s.charAt(0).toUpperCase()+s.slice(1);
+const hueOf=s=>{let h=0;for(const c of s)h=(h*31+c.charCodeAt(0))%360;return h;};
+function show(name){for(const id of ['welcome','loading','app'])$('#'+id).hidden=id!==name;}
+function setStatus(t,err){const s=$('#status');s.textContent=t;s.className=err?'error':'';$('#loadMsg').textContent=t;}
+
+/* ================= Almacenamiento local (IndexedDB) ================= */
+function idb(){return new Promise((res,rej)=>{const r=indexedDB.open('revistas-nube',1);r.onupgradeneeded=()=>r.result.createObjectStore('kv');r.onsuccess=()=>res(r.result);r.onerror=()=>rej(r.error);});}
+async function kvGet(k){try{const d=await idb();return await new Promise((res,rej)=>{const q=d.transaction('kv').objectStore('kv').get(k);q.onsuccess=()=>res(q.result);q.onerror=()=>rej(q.error);});}catch{return null}}
+async function kvSet(k,v){const d=await idb();await new Promise((res,rej)=>{const t=d.transaction('kv','readwrite');t.objectStore('kv').put(v,k);t.oncomplete=res;t.onerror=()=>rej(t.error);t.onabort=()=>rej(t.error);});}
+async function kvDel(k){try{const d=await idb();await new Promise((res,rej)=>{const t=d.transaction('kv','readwrite');t.objectStore('kv').delete(k);t.oncomplete=res;t.onerror=()=>rej(t.error);});}catch{}}
+const kvSetQuiet=(k,v)=>kvSet(k,v).catch(()=>{});
+
+/* ================= Ajustes ================= */
+const apiKey=()=>ls.getItem('cv_key')||'';
+const rootId=()=>ls.getItem('rv_root')||DEFAULT_ROOT;
+function parseFolder(s){
+  s=(s||'').trim();
+  const m=s.match(/folders\/([A-Za-z0-9_-]{10,})/)||s.match(/[?&]id=([A-Za-z0-9_-]{10,})/);
+  if(m)return m[1];
+  return /^[A-Za-z0-9_-]{15,}$/.test(s)?s:'';
+}
+function showSetup(msg){
+  show('welcome');
+  $('#keyInput').value=apiKey();
+  $('#folderInput').value='https://drive.google.com/drive/folders/'+rootId();
+  $('#cancelSetup').hidden=!issues.length;
+  setStatus(msg||'',!!msg);
+}
+$('#saveSetup').onclick=()=>{
+  const k=$('#keyInput').value.trim(),f=parseFolder($('#folderInput').value);
+  if(!/^AIza[0-9A-Za-z_-]{20,}$/.test(k)){setStatus('La clave de API debe empezar por AIza…',true);return;}
+  if(!f){setStatus('No reconozco ese enlace de carpeta de Google Drive.',true);return;}
+  ls.setItem('cv_key',k);ls.setItem('rv_root',f);
+  issues=[];start();
+};
+$('#cancelSetup').onclick=()=>show('app');
+$('#change').onclick=()=>showSetup();
+
+/* ================= API de Google Drive ================= */
+const gate={n:0,q:[]};
+function limit(fn){
+  return new Promise((res,rej)=>{
+    const run=()=>{gate.n++;fn().then(res,rej).finally(()=>{gate.n--;const nx=gate.q.shift();if(nx)nx();});};
+    gate.n<8?run():gate.q.push(run);
+  });
+}
+function dUrl(path,q){return DRIVE+path+'?'+new URLSearchParams({...q,key:apiKey()});}
+function friendly(status,reason,msg){
+  if(reason==='keyInvalid'||/API key not valid/i.test(msg))return 'La clave de API no es válida.';
+  if(/referer/i.test(msg))return 'La clave de API no admite este sitio. Revisa la restricción de sitios web en Google Cloud.';
+  if(reason==='accessNotConfigured'||/has not been used|is disabled/i.test(msg))return 'La API de Google Drive no está habilitada en el proyecto de Google Cloud.';
+  if(status===404)return 'No encuentro esa carpeta en Google Drive, o no es pública.';
+  if(status===403)return 'Google no permite leer la carpeta. Comprueba que está compartida con «Cualquier persona con el enlace».';
+  return 'Google respondió con el error '+status+'.';
+}
+async function dfetch(url,tries=4){
+  for(let i=0;;i++){
+    const r=await fetch(url);
+    if(r.ok)return r;
+    let reason='',msg='';
+    try{const j=await r.clone().json();msg=(j.error&&j.error.message)||'';reason=(j.error&&j.error.errors&&j.error.errors[0]&&j.error.errors[0].reason)||'';}catch{}
+    const retry=r.status===429||r.status>=500||(r.status===403&&/rateLimit/i.test(reason));
+    if(retry&&i<tries){await sleep(600*2**i);continue;}
+    throw Object.assign(new Error(friendly(r.status,reason,msg)),{status:r.status});
+  }
+}
+async function dlist(parent,fields){
+  let tok=null;const all=[];
+  do{
+    const r=await limit(()=>dfetch(dUrl('files',{q:`'${parent}' in parents and trashed=false`,pageSize:'1000',
+      fields:`nextPageToken,files(${fields})`,...(tok?{pageToken:tok}:{})})));
+    const j=await r.json();all.push(...j.files);tok=j.nextPageToken||null;
+  }while(tok);
+  return all;
+}
+async function fetchFileBlob(item,onProgress){
+  const r=await dfetch(dUrl('files/'+item.id,{alt:'media'}));
+  const total=+item.size||+r.headers.get('Content-Length')||0;
+  if(!r.body||!onProgress)return await r.blob();
+  const rd=r.body.getReader(),chunks=[];let got=0;
+  for(;;){const {done,value}=await rd.read();if(done)break;chunks.push(value);got+=value.length;onProgress(got,total);}
+  return new Blob(chunks);
+}
+
+/* ================= Catálogo: recorre la carpeta y lee los nombres ================= */
+const FIELDS='id,name,mimeType,size,modifiedTime,thumbnailLink';
+let issues=[],dlIndex={},offlineMode=false;
+
+// Nombres tipo «03-16-Historia National geographic-Nº147.pdf» (mes, año de 2 cifras, revista, número)
+const NAME_RE=/^(\d{1,2})-(\d{2}|\d{4})-(.*?)-?\s*N[º°o.]?\s*(\d+)\.pdf$/i;
+function toIssue(f,path){
+  const mag=path[0]||'Sin carpeta de revista';
+  const yearFolder=((path[1]||'').match(/\b(19|20)\d{2}\b/)||[])[0];
+  let year=yearFolder?+yearFolder:null,month=null,num=null;
+  const m=f.name.match(NAME_RE);
+  if(m){
+    const mo=+m[1];month=mo>=1&&mo<=12?mo:null;
+    const y=m[2].length===2?2000+ +m[2]:+m[2];year=y;num=+m[4];
+  }else{
+    const n=f.name.match(/N[º°o.]?\s*(\d+)/i);if(n)num=+n[1];
+  }
+  return {id:f.id,name:f.name,size:+f.size||0,thumb:f.thumbnailLink||'',mag,year,month,num,mod:Date.parse(f.modifiedTime)||0};
+}
+async function walk(id,path,depth,out){
+  const items=await dlist(id,FIELDS);
+  await Promise.all(items.map(async f=>{
+    if(f.mimeType==='application/vnd.google-apps.folder'){
+      if(depth<4)await walk(f.id,[...path,f.name],depth+1,out);
+    }else if(f.mimeType==='application/pdf'||/\.pdf$/i.test(f.name)){
+      out.push(toIssue(f,path));
+    }
+  }));
+  return out;
+}
+const issueTitle=i=>i.mag+(i.num?' · Nº '+i.num:'');
+const subtitle=i=>[i.month?cap(MESES[i.month-1]):'',i.year||''].filter(Boolean).join(' ')+(i.num?' · Nº '+i.num:'');
+
+/* ================= Arranque ================= */
+async function start(){
+  show('loading');
+  dlIndex=(await kvGet('rdl'))||{};
+  const cached=await kvGet('rcat:'+rootId());
+  if(cached&&cached.issues)issues=cached.issues;
+  if(!navigator.onLine&&cached){offlineMode=true;showApp();return;}
+  if(issues.length)showApp();                 // muestra lo guardado mientras se actualiza
+  try{
+    setStatus('Buscando revistas en Google Drive…');
+    const list=await walk(rootId(),[],0,[]);
+    issues=list.sort((a,b)=>a.mag.localeCompare(b.mag,'es'));
+    kvSetQuiet('rcat:'+rootId(),{at:Date.now(),issues});
+    offlineMode=false;showApp();
+  }catch(e){
+    if(issues.length){offlineMode=true;showApp();}
+    else{showSetup(e instanceof TypeError?'Sin conexión y no hay revistas guardadas en este dispositivo.':e.message);}
+  }
+}
+
+/* ================= Interfaz ================= */
+const sortPrefs=(()=>{try{return JSON.parse(ls.getItem('rv_sort'))||{};}catch{return {};}})();
+const st={mag:'',yr:'',q:'',dl:false,sort:sortPrefs.sort||'date'};
+let rev=!!sortPrefs.rev,filtered=[],shown=0;
+const saveSort=()=>{try{ls.setItem('rv_sort',JSON.stringify({sort:st.sort,rev}));}catch{}};
+
+function showApp(){
+  show('app');
+  $('#banner').hidden=!offlineMode;
+  $('#sort').value=st.sort;
+  const mags=[...new Set(issues.map(i=>i.mag))].sort((a,b)=>a.localeCompare(b,'es'));
+  $('#mag').innerHTML='<option value="">Todas las revistas</option>'+mags.map(m=>`<option>${esc(m)}</option>`).join('');
+  const years=[...new Set(issues.map(i=>i.year).filter(Boolean))].sort((a,b)=>b-a);
+  $('#yr').innerHTML='<option value="">Todos los años</option>'+years.map(y=>`<option>${y}</option>`).join('');
+  $('#mag').value=st.mag;$('#yr').value=st.yr;
+  apply();
+}
+function apply(){
+  const terms=norm(st.q).split(/\s+/).filter(Boolean);
+  filtered=issues.filter(i=>{
+    if(st.mag&&i.mag!==st.mag)return false;
+    if(st.yr&&String(i.year)!==st.yr)return false;
+    if(st.dl&&!dlIndex[i.id])return false;
+    const hay=norm([i.mag,i.name,i.year,i.num?'numero '+i.num:'',i.month?MESES[i.month-1]:''].join(' '));
+    return terms.every(t=>hay.includes(t));
+  });
+  // Fecha: más recientes primero por defecto. Número: menor a mayor por defecto.
+  const key=st.sort==='num'?i=>i.num||0:i=>(i.year||0)*12+(i.month||0);
+  const dir=(st.sort==='num'?1:-1)*(rev?-1:1);
+  filtered.sort((a,b)=>dir*(key(a)-key(b))||a.mag.localeCompare(b.mag,'es'));
+  saveSort();
+  $('#dirBtn').textContent=st.sort==='num'
+    ?(rev?'↑ Número mayor primero':'↓ Número menor primero')
+    :(rev?'↑ Más antiguas primero':'↓ Más recientes primero');
+  $('#dlOnly').classList.toggle('on',st.dl);
+  renderAll();
+}
+function renderAll(){
+  const g=$('#grid');g.innerHTML='';shown=0;
+  $('#summary').textContent=filtered.length===issues.length
+    ?`${issues.length.toLocaleString('es')} revistas`
+    :`${filtered.length.toLocaleString('es')} de ${issues.length.toLocaleString('es')} revistas`;
+  renderActive();renderMore();
+}
+function renderMore(){
+  const g=$('#grid'),end=Math.min(shown+PAGE,filtered.length);
+  const frag=document.createDocumentFragment();
+  for(let i=shown;i<end;i++){
+    const it=filtered[i],el=document.createElement('article');
+    el.className='card';el.tabIndex=0;
+    el.innerHTML=`<div class="cover${dlIndex[it.id]?' dl':''}">${coverHtml(it)}</div><div class="meta"><h3>${esc(it.mag)}</h3><p>${esc(subtitle(it))}</p></div>`;
+    const cv=el.querySelector('.cover');cv._issue=it;coverObserver.observe(cv);
+    el.addEventListener('click',()=>openIssue(it));
+    el.addEventListener('keydown',e=>{if(e.key==='Enter')openIssue(it);});
+    frag.appendChild(el);
+  }
+  g.appendChild(frag);shown=end;
+}
+new IntersectionObserver(es=>{if(es.some(e=>e.isIntersecting)&&shown<filtered.length)renderMore();},{rootMargin:'600px'}).observe($('#sentinel'));
+
+function renderActive(){
+  const box=$('#active');box.innerHTML='';
+  const add=(text,fn)=>{const x=document.createElement('button');x.className='chip';x.textContent=text+'  ×';x.onclick=fn;box.appendChild(x);};
+  if(st.q)add('Buscar: '+st.q,()=>{st.q='';$('#q').value='';apply();});
+  if(st.mag)add('Revista: '+st.mag,()=>{st.mag='';$('#mag').value='';apply();});
+  if(st.yr)add('Año: '+st.yr,()=>{st.yr='';$('#yr').value='';apply();});
+  if(st.dl)add('Descargadas',()=>{st.dl=false;apply();});
+}
+
+function coverHtml(it){return `<div class="ph" style="background:hsl(${hueOf(it.mag)},28%,32%)">${esc(it.mag)}</div><img alt="">`;}
+const coverObserver=new IntersectionObserver(entries=>{
+  for(const e of entries){
+    if(!e.isIntersecting)continue;
+    coverObserver.unobserve(e.target);
+    const img=e.target.querySelector('img'),it=e.target._issue;
+    if(it.thumb){img.src=it.thumb.replace(/=s\d+$/,'=s330');img.onload=()=>img.classList.add('ok');}
+  }
+},{rootMargin:'300px'});
+
+$('#q').addEventListener('input',e=>{st.q=e.target.value.trim();apply();});
+$('#mag').onchange=e=>{st.mag=e.target.value;apply();};
+$('#yr').onchange=e=>{st.yr=e.target.value;apply();};
+$('#sort').onchange=e=>{st.sort=e.target.value;rev=false;apply();};
+$('#dirBtn').onclick=()=>{rev=!rev;apply();};
+$('#dlOnly').onclick=()=>{st.dl=!st.dl;apply();};
+$('#reload').onclick=()=>start();
+
+/* ================= Descargas sin conexión ================= */
+async function saveOffline(){
+  const it=currentIssue,msg=$('#rLoad');
+  $('#rDl').disabled=true;
+  try{
+    if(navigator.storage&&navigator.storage.persist)navigator.storage.persist();
+    const blob=await fetchFileBlob(it,(g,t)=>{$('#rFoot').textContent=t?`Descargando… ${Math.round(g/t*100)}%`:`Descargando… ${mb(g)}`;});
+    await kvSet('rf:'+it.id,{blob});
+    dlIndex[it.id]={title:issueTitle(it),size:blob.size,ts:Date.now()};
+    await kvSet('rdl',dlIndex);
+    updateDlButton();
+    updateFoot();
+  }catch(e){
+    $('#rFoot').textContent='No se pudo descargar: '+(e instanceof TypeError?'sin conexión':e.message);
+  }finally{$('#rDl').disabled=false;}
+}
+async function removeOffline(){
+  const it=currentIssue;
+  await kvDel('rf:'+it.id);
+  delete dlIndex[it.id];
+  await kvSet('rdl',dlIndex);
+  updateDlButton();
+  updateFoot();
+}
+function updateDlButton(){
+  $('#rDl').textContent=dlIndex[currentIssue.id]?'Quitar':'Guardar';
+  $('#rDl').onclick=dlIndex[currentIssue.id]?removeOffline:saveOffline;
+}
+
+/* ================= Lector de PDF ================= */
+function loadScript(src,test){
+  return new Promise((res,rej)=>{
+    if(test&&test())return res();
+    const s=document.createElement('script');s.src=src;s.crossOrigin='anonymous';
+    s.onload=res;s.onerror=()=>rej(new Error('No se pudo cargar el lector de PDF. Comprueba la conexión.'));
+    document.head.appendChild(s);
+  });
+}
+async function loadPdfJs(){
+  await loadScript(PDFJS+'pdf.min.js',()=>window.pdfjsLib);
+  window.pdfjsLib.GlobalWorkerOptions.workerSrc=PDFJS+'pdf.worker.min.js';
+}
+
+let currentIssue=null,pdfDoc=null,pageNo=1,pageTotal=0,renderTask=null;
+function setLoad(text){const l=$('#rLoad');l.hidden=!text;l.textContent=text||'';}
+
+async function openIssue(it){
+  currentIssue=it;
+  $('#reader').hidden=false;document.body.style.overflow='hidden';
+  history.pushState({reader:1},'');
+  $('#rTitle').textContent=issueTitle(it);
+  $('#rFoot').textContent='';$('#rSlider').disabled=true;
+  updateDlButton();
+  setLoad('Abriendo la revista…');
+  try{
+    let buf;
+    const saved=await kvGet('rf:'+it.id);
+    if(saved&&saved.blob){buf=await saved.blob.arrayBuffer();}
+    else{
+      if(offlineMode)throw new Error('Esta revista no está descargada y no hay conexión.');
+      setLoad('Descargando la revista…');
+      const blob=await fetchFileBlob(it,(g,t)=>setLoad(t?`Descargando la revista… ${Math.round(g/t*100)}%`:`Descargando la revista… ${mb(g)}`));
+      buf=await blob.arrayBuffer();
+    }
+    setLoad('Preparando…');
+    await loadPdfJs();
+    pdfDoc=await window.pdfjsLib.getDocument({data:new Uint8Array(buf)}).promise;
+    pageTotal=pdfDoc.numPages;
+    $('#rSlider').max=pageTotal;$('#rSlider').disabled=false;
+    const pos=await kvGet('rpos:'+it.id);
+    setLoad(null);
+    await goPage(pos&&pos.page?pos.page:1);
+  }catch(e){
+    setLoad('No se pudo abrir la revista: '+e.message);
+  }
+}
+async function goPage(n){
+  if(!pdfDoc)return;
+  n=Math.max(1,Math.min(pageTotal,n));pageNo=n;
+  const page=await pdfDoc.getPage(n);
+  const wrap=$('#rWrap'),cw=Math.max(200,wrap.clientWidth-24);
+  const v1=page.getViewport({scale:1});
+  const dpr=Math.min(window.devicePixelRatio||1,2);
+  const scale=cw/v1.width;
+  const vp=page.getViewport({scale:scale*dpr});
+  const c=$('#rCanvas');
+  c.width=Math.floor(vp.width);c.height=Math.floor(vp.height);
+  c.style.width=(vp.width/dpr)+'px';c.style.height=(vp.height/dpr)+'px';
+  if(renderTask){try{renderTask.cancel();}catch{}}
+  renderTask=page.render({canvasContext:c.getContext('2d'),viewport:vp});
+  try{await renderTask.promise;}catch(e){if(e&&e.name==='RenderingCancelledException')return;throw e;}
+  wrap.scrollTop=0;
+  $('#rSlider').value=n;
+  updateFoot();
+  kvSetQuiet('rpos:'+currentIssue.id,{page:n,ts:Date.now()});
+}
+function updateFoot(){
+  if(!pdfDoc)return;
+  const dl=dlIndex[currentIssue.id]?' · Guardada sin conexión':'';
+  $('#rFoot').textContent=`Página ${pageNo} de ${pageTotal} · ${Math.round(pageNo/pageTotal*100)}%${dl}`;
+}
+$('#rPrev').onclick=()=>goPage(pageNo-1);
+$('#rNext').onclick=()=>goPage(pageNo+1);
+$('#rSlider').onchange=e=>goPage(+e.target.value);
+$('#rWrap').addEventListener('click',e=>{
+  const r=$('#rWrap').getBoundingClientRect(),x=e.clientX-r.left;
+  if(x<r.width*0.3)goPage(pageNo-1);
+  else if(x>r.width*0.7)goPage(pageNo+1);
+});
+function keyNav(e){
+  if($('#reader').hidden)return;
+  if(e.key==='ArrowRight'||e.key==='PageDown')goPage(pageNo+1);
+  else if(e.key==='ArrowLeft'||e.key==='PageUp')goPage(pageNo-1);
+  else if(e.key==='Escape')closeReader();
+}
+document.addEventListener('keyup',keyNav);
+function closeReader(fromPop){
+  if(!fromPop&&history.state&&history.state.reader){history.back();return;}
+  try{if(pdfDoc)pdfDoc.destroy();}catch{}
+  pdfDoc=null;
+  $('#reader').hidden=true;document.body.style.overflow='';
+}
+window.addEventListener('popstate',()=>{if(!$('#reader').hidden)closeReader(true);});
+$('#rBack').onclick=()=>closeReader();
+
+/* ================= Arranque de la app ================= */
+if('serviceWorker' in navigator)navigator.serviceWorker.register('sw.js').catch(()=>{});
+if(apiKey()&&rootId())start();else showSetup();
+</script>
+</body>
+</html>
