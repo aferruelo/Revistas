@@ -283,7 +283,12 @@ function toIssue(f,path){
   if(num===null&&range&&month)num=+range[1]+month-1;          // sin número en el nombre: se calcula desde la carpeta
   return {id:f.id,name:f.name,size:+f.size||0,thumb:f.thumbnailLink||'',dir:path.join('/'),mag,year,month,num,mod:Date.parse(f.modifiedTime)||0};
 }
-let coverFiles={};   // imágenes de portada: «carpeta|nombre sin extensión» → archivo
+let coverFiles={};   // imágenes de portada: «carpeta|año-mes» → archivo
+// Clave para emparejar PDF e imagen: carpeta + año-mes (tolera «.pdf.jpg», espacios y erratas en el número)
+function coverKey(name,dir){
+  const m=name.match(/(\d{4})\s*-\s*(\d{1,2})/);
+  return dir+'|'+(m?`${m[1]}-${m[2].padStart(2,'0')}`:name.replace(/\.pdf(\.(jpe?g|png))?$|\.(jpe?g|png)$/i,'').toLowerCase());
+}
 async function walk(id,path,depth,out){
   const items=await dlist(id,FIELDS);
   await Promise.all(items.map(async f=>{
@@ -292,15 +297,15 @@ async function walk(id,path,depth,out){
     }else if(f.mimeType==='application/pdf'||/\.pdf$/i.test(f.name)){
       out.push(toIssue(f,path));
     }else if(/\.(jpe?g|png)$/i.test(f.name)){
-      coverFiles[path.join('/')+'|'+f.name.replace(/\.(jpe?g|png)$/i,'').toLowerCase()]=f;
+      coverFiles[coverKey(f.name,path.join('/'))]=f;
     }
   }));
   return out;
 }
-// Si hay una imagen con el mismo nombre que el PDF en su carpeta, esa imagen es la portada
+// Si hay una imagen de la misma revista y mes en su carpeta, esa imagen es la portada
 function attachCovers(list){
   for(const it of list){
-    const c=coverFiles[it.dir+'|'+it.name.replace(/\.pdf$/i,'').toLowerCase()];
+    const c=coverFiles[coverKey(it.name,it.dir)];
     if(c)it.thumb=dUrl('files/'+c.id,{alt:'media'});
   }
   return list;
