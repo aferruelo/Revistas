@@ -281,8 +281,9 @@ function toIssue(f,path){
     const n=f.name.match(/N[º°o.]?\s*(\d+)/i);if(n)num=+n[1];
   }
   if(num===null&&range&&month)num=+range[1]+month-1;          // sin número en el nombre: se calcula desde la carpeta
-  return {id:f.id,name:f.name,size:+f.size||0,thumb:f.thumbnailLink||'',mag,year,month,num,mod:Date.parse(f.modifiedTime)||0};
+  return {id:f.id,name:f.name,size:+f.size||0,thumb:f.thumbnailLink||'',dir:path.join('/'),mag,year,month,num,mod:Date.parse(f.modifiedTime)||0};
 }
+let coverFiles={};   // imágenes de portada: «carpeta|nombre sin extensión» → archivo
 async function walk(id,path,depth,out){
   const items=await dlist(id,FIELDS);
   await Promise.all(items.map(async f=>{
@@ -290,9 +291,19 @@ async function walk(id,path,depth,out){
       if(depth<4)await walk(f.id,[...path,f.name],depth+1,out);
     }else if(f.mimeType==='application/pdf'||/\.pdf$/i.test(f.name)){
       out.push(toIssue(f,path));
+    }else if(/\.(jpe?g|png)$/i.test(f.name)){
+      coverFiles[path.join('/')+'|'+f.name.replace(/\.(jpe?g|png)$/i,'').toLowerCase()]=f;
     }
   }));
   return out;
+}
+// Si hay una imagen con el mismo nombre que el PDF en su carpeta, esa imagen es la portada
+function attachCovers(list){
+  for(const it of list){
+    const c=coverFiles[it.dir+'|'+it.name.replace(/\.pdf$/i,'').toLowerCase()];
+    if(c)it.thumb=dUrl('files/'+c.id,{alt:'media'});
+  }
+  return list;
 }
 const issueTitle=i=>i.mag+(i.num?' · Nº '+i.num:'');
 const subtitle=i=>[i.month?cap(MESES[i.month-1]):'',i.year||''].filter(Boolean).join(' ')+(i.num?' · Nº '+i.num:'');
@@ -307,7 +318,8 @@ async function start(){
   if(issues.length)showApp();                 // muestra lo guardado mientras se actualiza
   try{
     setStatus('Buscando revistas en Google Drive…');
-    const list=await walk(rootId(),[],0,[]);
+    coverFiles={};
+    const list=attachCovers(await walk(rootId(),[],0,[]));
     issues=list.sort((a,b)=>a.mag.localeCompare(b.mag,'es'));
     kvSetQuiet('rcat:'+rootId(),{at:Date.now(),issues});
     offlineMode=false;showApp();
