@@ -306,7 +306,8 @@ async function walk(id,path,depth,out){
 function attachCovers(list){
   for(const it of list){
     const c=coverFiles[coverKey(it.name,it.dir)];
-    if(c)it.thumb=dUrl('files/'+c.id,{alt:'media'});
+    // Miniatura de Drive (no descarga el JPG completo ni consume la cuota de descargas); si falta, el original
+    if(c)it.thumb=c.thumbnailLink||dUrl('files/'+c.id,{alt:'media'});
   }
   return list;
 }
@@ -409,7 +410,11 @@ const coverObserver=new IntersectionObserver(entries=>{
     if(!e.isIntersecting)continue;
     coverObserver.unobserve(e.target);
     const img=e.target.querySelector('img'),it=e.target._issue;
-    if(it.thumb){img.src=it.thumb.replace(/=s\d+$/,'=s330');img.onload=()=>img.classList.add('ok');}
+    if(it.thumb){
+      img.onload=()=>img.classList.add('ok');
+      img.onerror=()=>console.warn('Carátula no cargada:',it.name);   // la tarjeta conserva el color y el nombre
+      img.src=it.thumb.replace(/=s\d+$/,'=s330');
+    }
   }
 },{rootMargin:'300px'});
 
